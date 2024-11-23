@@ -7,7 +7,6 @@ python3 scripts/run_cifar.py evaluation --bucket_name_prefix $BUCKET_PREFIX --tp
 
 import functools
 
-import fire
 import numpy as np
 import tensorflow.compat.v1 as tf
 
@@ -130,7 +129,7 @@ def evaluation(  # evaluation loop for use during training
 
 
 def train(
-    exp_name, tpu_name, bucket_name_prefix, model_name='unet2d16b2', dataset='cifar10',
+    model_name='unet2d16b2', dataset='cifar10',
     optimizer='adam', total_bs=128, grad_clip=1., lr=2e-4, warmup=5000,
     num_diffusion_timesteps=1000, beta_start=0.0001, beta_end=0.02, beta_schedule='linear',
     model_mean_type='eps', model_var_type='fixedlarge', loss_type='mse',
@@ -162,7 +161,3 @@ def train(
     train_input_fn=ds.train_input_fn,
     tpu=tpu_name, log_dir=log_dir, dump_kwargs=kwargs, iterations_per_loop=2000, keep_checkpoint_max=keep_checkpoint_max
   )
-
-
-if __name__ == '__main__':
-  fire.Fire()

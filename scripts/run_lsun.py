@@ -16,7 +16,6 @@ python3 scripts/run_lsun.py evaluation --bucket_name_prefix $BUCKET_PREFIX --tpu
 
 import functools
 
-import fire
 import numpy as np
 import tensorflow.compat.v1 as tf
 
@@ -151,7 +150,3 @@ def train(
       vars_to_warm_start=[".*"]
     ) if warm_start_model_dir else None
   )
-
-
-if __name__ == '__main__':
-  fire.Fire()

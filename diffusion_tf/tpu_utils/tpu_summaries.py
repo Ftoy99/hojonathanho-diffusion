@@ -7,8 +7,8 @@ import collections
 from absl import logging
 import tensorflow as tf
 
-
-summary = tf.contrib.summary  # TensorFlow Summary API v2.
+# TODO
+# summary = tf.contrib.summary  # TensorFlow Summary API v2.
 
 
 TpuSummaryEntry = collections.namedtuple(

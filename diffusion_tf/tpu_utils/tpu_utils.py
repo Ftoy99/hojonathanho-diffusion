@@ -6,8 +6,8 @@ from datetime import datetime
 
 import numpy as np
 import tensorflow.compat.v1 as tf
-import tensorflow_gan as tfgan
-from tensorflow.contrib.tpu.python.ops import tpu_ops
+# import tensorflow_gan as tfgan
+# from tensorflow.contrib.tpu.python.ops import tpu_ops
 from tensorflow.python.tpu import tpu_function
 from tqdm import trange
 
@@ -24,7 +24,9 @@ def num_tpu_replicas():
 
 def get_tpu_replica_id():
   with tf.control_dependencies(None):
-    return tpu_ops.tpu_replicated_input(list(range(num_tpu_replicas())))
+    # TODO
+    # return tpu_ops.tpu_replicated_input(list(range(num_tpu_replicas())))
+    pass
 
 
 def distributed(fn, *, args, reduction, strategy):
@@ -44,18 +46,22 @@ def distributed(fn, *, args, reduction, strategy):
 
 INCEPTION_URL = 'http://download.tensorflow.org/models/frozen_inception_v1_2015_12_05_v4.tar.gz'
 INCEPTION_FROZEN_GRAPH = 'inceptionv1_for_inception_score_tpu.pb'
-INCEPTION_GRAPH_DEF = tfgan.eval.get_graph_def_from_url_tarball(
-  INCEPTION_URL, INCEPTION_FROZEN_GRAPH, os.path.basename(INCEPTION_URL))
+
+
+# TODO
+# INCEPTION_GRAPH_DEF = tfgan.eval.get_graph_def_from_url_tarball(
+#   INCEPTION_URL, INCEPTION_FROZEN_GRAPH, os.path.basename(INCEPTION_URL))
 
 
 def run_inception(images):
   assert images.dtype == tf.float32  # images should be in [-1, 1]
-  out = tfgan.eval.run_inception(
-    images,
-    graph_def=INCEPTION_GRAPH_DEF,
-    default_graph_def_fn=None,
-    output_tensor=['pool_3:0', 'logits:0']
-  )
+  #TODO
+  # out = tfgan.eval.run_inception(
+  #   images,
+  #   graph_def=INCEPTION_GRAPH_DEF,
+  #   default_graph_def_fn=None,
+  #   output_tensor=['pool_3:0', 'logits:0']
+  # )
   return {'pool_3': out[0], 'logits': out[1]}
 
 
@@ -76,11 +82,12 @@ class Model:
   def sample_and_run_inception(self, dummy_x, y, clip_samples=True):
     samples_dict = self.samples_fn(dummy_x, y)
     assert isinstance(samples_dict, dict)
-    return {
-      k: run_inception(tfgan.eval.preprocess_image(unnormalize_data(
-        tf.clip_by_value(v, -1., 1.) if clip_samples else v)))
-      for (k, v) in samples_dict.items()
-    }
+    # TODO
+    # return {
+    #   k: run_inception(tfgan.eval.preprocess_image(unnormalize_data(
+    #     tf.clip_by_value(v, -1., 1.) if clip_samples else v)))
+    #   for (k, v) in samples_dict.items()
+    # }
 
   def bpd_fn(self, x, y) -> dict:
     return None

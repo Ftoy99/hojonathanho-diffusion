@@ -7,7 +7,7 @@ import functools
 
 import numpy as np
 import tensorflow as tf
-import tensorflow_datasets as tfds
+# import tensorflow_datasets as tfds
 
 
 def pack(image, label):
@@ -54,20 +54,26 @@ class SimpleDataset:
     return ds
 
   def train_input_fn(self, params):
-    ds = tfds.load(self._tfds_name, split='train', shuffle_files=True, data_dir=self._data_dir)
-    ds = ds.repeat()
-    ds = ds.shuffle(50000)
-    return self._proc_and_batch(ds, params['batch_size'])
+    #TODO
+    # ds = tfds.load(self._tfds_name, split='train', shuffle_files=True, data_dir=self._data_dir)
+    # ds = ds.repeat()
+    # ds = ds.shuffle(50000)
+    # return self._proc_and_batch(ds, params['batch_size'])
+    pass
 
   def train_one_pass_input_fn(self, params):
-    ds = tfds.load(self._tfds_name, split='train', shuffle_files=False, data_dir=self._data_dir)
-    return self._proc_and_batch(ds, params['batch_size'])
+    #TODO
+    # ds = tfds.load(self._tfds_name, split='train', shuffle_files=False, data_dir=self._data_dir)
+    # return self._proc_and_batch(ds, params['batch_size'])
+    pass
 
   def eval_input_fn(self, params):
     if self.eval_split_name is None:
       return None
-    ds = tfds.load(self._tfds_name, split=self.eval_split_name, shuffle_files=False, data_dir=self._data_dir)
-    return self._proc_and_batch(ds, params['batch_size'])
+    #TODO
+    # ds = tfds.load(self._tfds_name, split=self.eval_split_name, shuffle_files=False, data_dir=self._data_dir)
+    # return self._proc_and_batch(ds, params['batch_size'])
+      pass
 
 
 class LsunDataset:

@@ -1,5 +1,5 @@
 import tensorflow.compat.v1 as tf
-import tensorflow.contrib as tf_contrib
+# import tensorflow.contrib as tf_contrib
 
 from .. import nn
 
@@ -9,8 +9,9 @@ def nonlinearity(x):
 
 
 def normalize(x, *, temb, name):
-  return tf_contrib.layers.group_norm(x, scope=name)
-
+  # TODO fix this
+  # return tf_contrib.layers.group_norm(x, scope=name)
+  pass
 
 def upsample(x, *, name, with_conv):
   with tf.variable_scope(name):

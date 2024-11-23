@@ -7,7 +7,6 @@ python3 scripts/run_celebahq.py evaluation --bucket_name_prefix $BUCKET_PREFIX -
 
 import functools
 
-import fire
 import numpy as np
 import tensorflow.compat.v1 as tf
 
@@ -161,6 +160,3 @@ def train(
     tpu=tpu_name, log_dir=log_dir, dump_kwargs=kwargs
   )
 
-
-if __name__ == '__main__':
-  fire.Fire()
