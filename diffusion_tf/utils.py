@@ -190,14 +190,3 @@ def ema_scope(orig_model_ema):
   with tf.variable_scope(tf.get_variable_scope(), custom_getter=_ema_getter, reuse=True):
     with tf.name_scope('ema_scope'):
       yield
-
-
-def get_gcp_region():
-  # https://stackoverflow.com/a/31689692
-  import requests
-  metadata_server = "http://metadata/computeMetadata/v1/instance/"
-  metadata_flavor = {'Metadata-Flavor': 'Google'}
-  zone = requests.get(metadata_server + 'zone', headers=metadata_flavor).text
-  zone = zone.split('/')[-1]
-  region = '-'.join(zone.split('-')[:-1])
-  return region
