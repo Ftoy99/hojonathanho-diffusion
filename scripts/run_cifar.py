@@ -6,6 +6,10 @@ python3 scripts/run_cifar.py evaluation --bucket_name_prefix $BUCKET_PREFIX --tp
 """
 import functools
 
+import numpy as np
+import PIL as pil
+from PIL import Image
+
 from diffusion_tf import utils
 from diffusion_tf.diffusion_utils_2 import get_beta_schedule
 from diffusion_tf.models.cifar_keras import CifarKerasModel
@@ -97,6 +101,26 @@ def train(
     #     keep_checkpoint_max=keep_checkpoint_max
     # )
 
+    # this is to check if images are ok
+    for batch in ds:
+        for img_bytes in batch[b'data']:
+            # Convert img_bytes (a 1D array of 3072) into a 32x32x3 image
+            r = img_bytes[:1024].reshape(32, 32)
+            g = img_bytes[1024:2048].reshape(32, 32)
+            b = img_bytes[2048:].reshape(32, 32)
+
+            # Stack channels into a single 32x32x3 array
+            img_array = np.stack([r, g, b], axis=-1).astype(np.uint8)
+
+            # Create a Pillow Image from the array
+            img = Image.fromarray(img_array)
+
+            # Show the image
+            img.show()
+
+            # Optionally save the image
+            img.save("output_image.png")
+
     # Make model
     cifar_keras_model = CifarKerasModel(
         model_name=model_name,
@@ -109,5 +133,7 @@ def train(
         num_classes=ds.num_classes,
         dropout=dropout,
         randflip=randflip)
+
+
 
     print(cifar_keras_model)
