@@ -111,15 +111,15 @@ def train(
 
             # Stack channels into a single 32x32x3 array
             img_array = np.stack([r, g, b], axis=-1).astype(np.uint8)
-
-            # Create a Pillow Image from the array
-            img = Image.fromarray(img_array)
-
-            # Show the image
-            img.show()
-
-            # Optionally save the image
-            img.save("output_image.png")
+            #
+            # # Create a Pillow Image from the array
+            # img = Image.fromarray(img_array)
+            #
+            # # Show the image
+            # img.show()
+            #
+            # # Optionally save the image
+            # img.save("output_image.png")
 
     # Make model
     cifar_keras_model = CifarKerasModel(
