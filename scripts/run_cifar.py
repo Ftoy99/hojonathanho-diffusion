@@ -8,6 +8,7 @@ import functools
 
 import numpy as np
 import PIL as pil
+import tensorflow as tf
 from PIL import Image
 
 from diffusion_tf import utils
@@ -76,7 +77,7 @@ def train(
     kwargs = dict(locals())
 
     # Get dataset
-    ds, labels = datasets.get_dataset("cifar10")
+    ds, ds_labels = datasets.get_dataset("cifar10")
 
     # model_constructor = lambda: Model(
     #     model_name=model_name,
@@ -101,7 +102,9 @@ def train(
     #     keep_checkpoint_max=keep_checkpoint_max
     # )
 
-    # this is to check if images are ok
+    # this is to check if images are ok and flat it
+    images = []
+    labels = []
     for batch in ds:
         for img_bytes in batch[b'data']:
             # Convert img_bytes (a 1D array of 3072) into a 32x32x3 image
@@ -111,15 +114,30 @@ def train(
 
             # Stack channels into a single 32x32x3 array
             img_array = np.stack([r, g, b], axis=-1).astype(np.uint8)
-            #
-            # # Create a Pillow Image from the array
-            # img = Image.fromarray(img_array)
-            #
-            # # Show the image
-            # img.show()
-            #
-            # # Optionally save the image
-            # img.save("output_image.png")
+            images.append(img_array)
+        for label in batch[b'labels']:
+            labels.append(label)
+
+    # Convert images and labels to NumPy arrays
+    images = np.array(images)
+    labels = np.array(labels)
+
+    # Define the split ratio
+    split_ratio = 0.8  # 80% training, 20% testing
+    num_samples = len(images)
+    split_index = int(num_samples * split_ratio)
+
+    # Split the data
+    train_images, test_images = images[:split_index], images[split_index:]
+    train_labels, test_labels = labels[:split_index], labels[split_index:]
+
+    # Create TensorFlow datasets
+    train_ds = tf.data.Dataset.from_tensor_slices((train_images, train_labels))
+    test_ds = tf.data.Dataset.from_tensor_slices((test_images, test_labels))
+
+    # Shuffle, batch, and prefetch
+    train_ds = train_ds.shuffle(1000).batch(100).prefetch(tf.data.experimental.AUTOTUNE)
+    test_ds = test_ds.batch(100).prefetch(tf.data.experimental.AUTOTUNE)
 
     # Make model
     cifar_keras_model = CifarKerasModel(
@@ -130,10 +148,18 @@ def train(
         model_mean_type=model_mean_type,
         model_var_type=model_var_type,
         loss_type=loss_type,
-        num_classes=ds.num_classes,
+        num_classes=len(ds_labels),
         dropout=dropout,
         randflip=randflip)
 
+    cifar_keras_model.compile(
+        optimizer='adam',
+        loss='sparse_categorical_crossentropy',  # Suitable for integer labels
+        metrics=['accuracy'])  # maybe add optimizer loss and stuff
 
+    # Train the model
+    history = cifar_keras_model.fit(train_ds, epochs=20)
 
-    print(cifar_keras_model)
+    # Evaluate the model
+    test_loss, test_accuracy = cifar_keras_model.evaluate(test_ds)
+    print(f"Test Accuracy: {test_accuracy * 100:.2f}%")

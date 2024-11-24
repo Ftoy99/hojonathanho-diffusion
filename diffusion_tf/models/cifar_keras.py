@@ -2,6 +2,7 @@ import functools
 
 import numpy as np
 import tensorflow as tf
+
 from diffusion_tf.models import unet
 from diffusion_tf.diffusion_utils_2 import GaussianDiffusion2
 
@@ -16,6 +17,9 @@ class CifarKerasModel(tf.keras.Model):
         self.num_classes = num_classes
         self.dropout = dropout
         self.randflip = randflip
+        self.dense1 = tf.keras.layers.Dense(32, activation="relu")
+        self.dense2 = tf.keras.layers.Dense(5, activation="softmax")
+        self.dropout = tf.keras.layers.Dropout(0.5)
 
     def _denoise(self, x, t, y, dropout):
         B, H, W, C = x.shape.as_list()
@@ -30,6 +34,27 @@ class CifarKerasModel(tf.keras.Model):
                 out_ch=out_ch, num_classes=self.num_classes, dropout=dropout
             )
         raise NotImplementedError(self.model_name)
+
+    # This is the equvalent to train_fn in the original model
+    # def call(self, inputs, training=False, mask=None):
+    #     x, y = inputs
+    #
+    #     B, H, W, C = inputs.shape  # Batch size , Height , Width , channels
+    #     # if self.randflip:
+    #     #     x = tf.image.random_flip_left_right(inputs)
+    #     #     assert x.shape == [B, H, W, C]
+    #     t = tf.random.uniform([B], 0, self.diffusion.num_timesteps, dtype=tf.int32)
+    #     # losses = self.diffusion.training_losses(
+    #     #     denoise_fn=functools.partial(self._denoise, y=y, dropout=self.dropout), x_start=x, t=t)
+    #     losses = self.diffusion.training_losses(
+    #         denoise_fn=functools.partial(self._denoise, dropout=self.dropout), x_start=x, t=t)
+    #     assert losses.shape == t.shape == [B]
+    #     return {'loss': tf.reduce_mean(losses)}
+    # this does not work
+    def call(self, inputs, training=False, **kwargs):
+        x = self.dense1(inputs)
+        x = self.dropout(x, training=training)
+        return self.dense2(x)
 
     def train_fn(self, x, y):
         B, H, W, C = x.shape
