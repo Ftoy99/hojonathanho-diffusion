@@ -187,8 +187,8 @@ def run_training(
         return tf.estimator.tpu.TPUEstimatorSpec(
             mode=mode, host_call=tpu_summary.get_host_call(), loss=loss, train_op=train_op)
 
-    # # Set up Estimator and train
-    # print("warm_start_from:", warm_start_from)
+    # Set up Estimator and train
+    print("warm_start_from:", warm_start_from)
     # estimator = tf.estimator.tpu.TPUEstimator(
     #     model_fn=model_fn,
     #     use_tpu=True,
@@ -208,8 +208,19 @@ def run_training(
     #     ),
     #     warm_start_from=warm_start_from
     # )
-    #
     # estimator.train(input_fn=train_input_fn, max_steps=max_steps)
+    # Define your model using tf.keras
+    inputs = tf.keras.Input(shape=(input_shape,))
+    x = tf.keras.layers.Dense(128, activation='relu')(inputs)
+    outputs = tf.keras.layers.Dense(num_classes, activation='softmax')(x)
+    model = tf.keras.Model(inputs, outputs)
+
+    # Compile the model
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
+        loss=tf.keras.losses.CategoricalCrossentropy(),
+        metrics=['accuracy']
+    )
 
 
 # ========== Evaluation / sampling ==========
