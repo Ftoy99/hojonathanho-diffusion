@@ -68,12 +68,11 @@ def train(
         num_diffusion_timesteps=1000, beta_start=0.0001, beta_end=0.02, beta_schedule='linear',
         model_mean_type='eps', model_var_type='fixedlarge', loss_type='mse',
         dropout=0.1, randflip=1,
-        tfds_data_dir='tensorflow_datasets', log_dir='logs', keep_checkpoint_max=2
-):
+        tfds_data_dir='tensorflow_datasets', log_dir='logs', keep_checkpoint_max=2):
     kwargs = dict(locals())
 
     # Get dataset
-    ds = datasets.get_dataset(dataset, tfds_data_dir=tfds_data_dir)
+    ds, labels = datasets.get_dataset("cifar10")
 
     # model_constructor = lambda: Model(
     #     model_name=model_name,

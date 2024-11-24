@@ -110,8 +110,8 @@ def run_training(
         zone=None, project=None,
         exp_name, dump_kwargs=None,
         iterations_per_loop=1000, keep_checkpoint_max=2, max_steps=int(1e10),
-        warm_start_from=None
-):
+        warm_start_from=None):
+
     tf.logging.set_verbosity(tf.logging.INFO)
 
     # Create checkpoint directory
@@ -209,18 +209,6 @@ def run_training(
     #     warm_start_from=warm_start_from
     # )
     # estimator.train(input_fn=train_input_fn, max_steps=max_steps)
-    # Define your model using tf.keras
-    inputs = tf.keras.Input(shape=(input_shape,))
-    x = tf.keras.layers.Dense(128, activation='relu')(inputs)
-    outputs = tf.keras.layers.Dense(num_classes, activation='softmax')(x)
-    model = tf.keras.Model(inputs, outputs)
-
-    # Compile the model
-    model.compile(
-        optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
-        loss=tf.keras.losses.CategoricalCrossentropy(),
-        metrics=['accuracy']
-    )
 
 
 # ========== Evaluation / sampling ==========
