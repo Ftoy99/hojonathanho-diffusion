@@ -1,13 +1,15 @@
 import functools
 
+import keras
 import numpy as np
 import tensorflow as tf
+from tensorflow.python.framework.ops import EagerTensor
 
 from diffusion_tf.models import unet
 from diffusion_tf.diffusion_utils_2 import GaussianDiffusion2
 
 
-class CifarKerasModel(tf.keras.Model):
+class CifarKerasModel(keras.Model):
     def __init__(self, *args, model_name, betas: np.ndarray, model_mean_type: str, model_var_type: str, loss_type: str,
                  num_classes: int, dropout: float, randflip, **kwargs):
         super().__init__()
@@ -17,9 +19,24 @@ class CifarKerasModel(tf.keras.Model):
         self.num_classes = num_classes
         self.dropout = dropout
         self.randflip = randflip
-        self.dense1 = tf.keras.layers.Dense(32, activation="relu")
-        self.dense2 = tf.keras.layers.Dense(10, activation="softmax")
-        self.dropout = tf.keras.layers.Dropout(0.5)
+        self.random_flip = keras.layers.RandomFlip()
+        self.dense1 = keras.layers.Dense(32, activation="relu")
+        self.dense2 = keras.layers.Dense(10, activation="softmax")
+        self.dropout = keras.layers.Dropout(0.5)
+
+    def train_step(self, data):
+        '''
+        Originally train takes input and step count to noise/denoise must addjust this method for call
+        '''
+        return super().train_step(data)
+
+    def call(self, inputs, training=False, **kwargs):
+        # To breakpoint and debug in here you must have eager execution on
+        if self.randflip:
+            inputs = self.random_flip(inputs)
+        inputs = self.dense1(inputs)
+        inputs = self.dropout(inputs, training=training)  # This is to prevent overfitting , dont run when inference
+        return self.dense2(inputs)
 
     def _denoise(self, x, t, y, dropout):
         B, H, W, C = x.shape.as_list()
@@ -34,27 +51,6 @@ class CifarKerasModel(tf.keras.Model):
                 out_ch=out_ch, num_classes=self.num_classes, dropout=dropout
             )
         raise NotImplementedError(self.model_name)
-
-    # This is the equvalent to train_fn in the original model
-    # def call(self, inputs, training=False, mask=None):
-    #     x, y = inputs
-    #
-    #     B, H, W, C = inputs.shape  # Batch size , Height , Width , channels
-    #     # if self.randflip:
-    #     #     x = tf.image.random_flip_left_right(inputs)
-    #     #     assert x.shape == [B, H, W, C]
-    #     t = tf.random.uniform([B], 0, self.diffusion.num_timesteps, dtype=tf.int32)
-    #     # losses = self.diffusion.training_losses(
-    #     #     denoise_fn=functools.partial(self._denoise, y=y, dropout=self.dropout), x_start=x, t=t)
-    #     losses = self.diffusion.training_losses(
-    #         denoise_fn=functools.partial(self._denoise, dropout=self.dropout), x_start=x, t=t)
-    #     assert losses.shape == t.shape == [B]
-    #     return {'loss': tf.reduce_mean(losses)}
-    # this does not work
-    def call(self, inputs, training=False, **kwargs):
-        x = self.dense1(inputs)
-        x = self.dropout(x, training=training)
-        return self.dense2(x)
 
     def train_fn(self, x, y):
         B, H, W, C = x.shape

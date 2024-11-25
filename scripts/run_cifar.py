@@ -72,7 +72,7 @@ def train(
         dropout=0.1, randflip=1,
         tfds_data_dir='tensorflow_datasets', log_dir='logs', keep_checkpoint_max=2):
     kwargs = dict(locals())
-
+    tf.config.run_functions_eagerly(True)
     # Get dataset
     ds, ds_labels = datasets.get_dataset("cifar10")
 
