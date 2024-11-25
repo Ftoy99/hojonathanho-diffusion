@@ -18,7 +18,7 @@ class CifarKerasModel(tf.keras.Model):
         self.dropout = dropout
         self.randflip = randflip
         self.dense1 = tf.keras.layers.Dense(32, activation="relu")
-        self.dense2 = tf.keras.layers.Dense(5, activation="softmax")
+        self.dense2 = tf.keras.layers.Dense(10, activation="softmax")
         self.dropout = tf.keras.layers.Dropout(0.5)
 
     def _denoise(self, x, t, y, dropout):

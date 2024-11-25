@@ -113,15 +113,19 @@ def train(
             b = img_bytes[2048:].reshape(32, 32)
 
             # Stack channels into a single 32x32x3 array
-            img_array = np.stack([r, g, b], axis=-1).astype(np.uint8)
+            # TypeError: Value passed to parameter 'a' has DataType uint8 not in list of allowed values: bfloat16, float16, float32, float64, int32, int64, complex64, complex128 it needs to run on one of this
+            img_array = np.stack([r, g, b], axis=-1).astype(np.float32)  # note np.float32
+
+            img_array /= 255.0
+
             images.append(img_array)
         for label in batch[b'labels']:
             labels.append(label)
 
     # Convert images and labels to NumPy arrays
-    images = np.array(images)
-    labels = np.array(labels)
-
+    images = np.array(images, dtype=np.float32)
+    labels = np.array(labels, dtype=np.int32)
+    labels = np.array([np.full((32, 32), label) for label in labels]) # make each element a 32x32
     # Define the split ratio
     split_ratio = 0.8  # 80% training, 20% testing
     num_samples = len(images)
@@ -129,8 +133,10 @@ def train(
 
     # Split the data
     train_images, test_images = images[:split_index], images[split_index:]
-    train_labels, test_labels = labels[:split_index], labels[split_index:]
+    print(train_images.shape)
 
+    train_labels, test_labels = labels[:split_index], labels[split_index:]
+    print(train_labels.shape)
     # Create TensorFlow datasets
     train_ds = tf.data.Dataset.from_tensor_slices((train_images, train_labels))
     test_ds = tf.data.Dataset.from_tensor_slices((test_images, test_labels))
