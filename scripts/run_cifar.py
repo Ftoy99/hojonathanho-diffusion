@@ -7,11 +7,8 @@ python3 scripts/run_cifar.py evaluation --bucket_name_prefix $BUCKET_PREFIX --tp
 import functools
 
 import numpy as np
-import PIL as pil
 import tensorflow as tf
-from PIL import Image
 
-from diffusion_tf import utils
 from diffusion_tf.diffusion_utils_2 import get_beta_schedule
 from diffusion_tf.models.cifar_keras import CifarKerasModel
 from diffusion_tf.models.cifar_og_model import Model
