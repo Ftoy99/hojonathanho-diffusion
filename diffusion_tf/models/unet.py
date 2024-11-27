@@ -9,7 +9,7 @@ def nonlinearity(x):
 
 
 def normalize(x, *, temb, name):
-    # TODO fix this
+    # TODO
     # return tf_contrib.layers.group_norm(x, scope=name)
     pass
 

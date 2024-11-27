@@ -63,7 +63,7 @@ def nin(x, *, name, num_units, init_scale=1.):
 
 
 def dense(x, *, name, num_units, init_scale=1., bias=True):
-  with tf.variable_scope(name):
+  with tf.variable_scope(name, reuse=True):
     _, in_dim = x.shape
     W = tf.get_variable('W', shape=[in_dim, num_units], initializer=default_init(scale=init_scale), dtype=DEFAULT_DTYPE)
     z = tf.matmul(x, W)

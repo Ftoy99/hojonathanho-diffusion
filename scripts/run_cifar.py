@@ -122,7 +122,9 @@ def train(
     # Convert images and labels to NumPy arrays
     images = np.array(images, dtype=np.float32)
     labels = np.array(labels, dtype=np.int32)
-    labels = np.array([np.full((32, 32), label) for label in labels]) # make each element a 32x32
+    # TODO this might be needed
+    # labels = np.array([np.full((32, 32), label) for label in labels]) # make each element a 32x32
+
     # Define the split ratio
     split_ratio = 0.8  # 80% training, 20% testing
     num_samples = len(images)
