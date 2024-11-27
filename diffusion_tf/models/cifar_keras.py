@@ -5,10 +5,11 @@ import keras
 import numpy as np
 import tensorflow as tf
 from keras.src import tree
-
+from keras.src import ops
 from keras.src.trainers.data_adapters import data_adapter_utils
 from diffusion_tf.models import unet
 from diffusion_tf.diffusion_utils_2 import GaussianDiffusion2
+from keras.src.backend.config import backend
 
 
 class CifarKerasModel(keras.Model):
@@ -22,47 +23,68 @@ class CifarKerasModel(keras.Model):
         self.dropout = dropout
         self.randflip = randflip
         self.random_flip = keras.layers.RandomFlip()
-        self.dense1 = keras.layers.Dense(32, activation="relu")
-        self.dense2 = keras.layers.Dense(10, activation="softmax")
-        self.dropout = keras.layers.Dropout(0.5)
+
+    def compute_loss(self, x=None, y=None, y_pred=None, sample_weight=None, training=True):
+        del x
+        del training
+        losses = []
+        if self._compile_loss is not None:
+            loss = self._compile_loss(y, y_pred, sample_weight)
+            if loss is not None:
+                losses.append(loss)
+        for loss in self.losses:
+            losses.append(ops.sum(ops.cast(loss, dtype=backend.floatx())))
+        if backend.backend() != "jax" and len(losses) == 0:
+            raise ValueError(
+                "No loss to compute. Provide a `loss` argument in `compile()`."
+            )
+        if len(losses) == 1:
+            total_loss = losses[0]
+        elif len(losses) == 0:
+            total_loss = ops.zeros(())
+        else:
+            total_loss = ops.sum(losses)
+        return total_loss
 
     def train_step(self, data):
         '''
         Originally train takes input and step count to noise/denoise must addjust this method for call
         '''
-        print(data)
         x, y, sample_weight = data_adapter_utils.unpack_x_y_sample_weight(data)
 
         # Forward pass
         with tf.GradientTape() as tape:
             if self._call_has_training_arg:
-                y_pred = self(x, y, training=True)
+                # Call method returns the losses
+                loss, y_pred = self(x, y, training=True)
             else:
-                y_pred = self(x, y)
-            loss = self._compute_loss(
-                x=x,
-                y=y,
-                y_pred=y_pred,
-                sample_weight=sample_weight,
-                training=True,
-            )
+                loss, y_pred = self(x, y)
+
+            # loss = self.compute_loss(
+            #     x=x,
+            #     y=y,
+            #     y_pred=y_pred,
+            #     sample_weight=sample_weight,
+            #     training=True,
+            # )
+
             self._loss_tracker.update_state(
                 loss, sample_weight=tf.shape(tree.flatten(x)[0])[0]
             )
             if self.optimizer is not None:
                 loss = self.optimizer.scale_loss(loss)
 
-        # Compute gradients
-        if self.trainable_weights:
-            trainable_weights = self.trainable_weights
-            gradients = tape.gradient(loss, trainable_weights)
+        # # Compute gradients
+        # if self.trainable_weights:
+        #     trainable_weights = self.trainable_weights
+        #     gradients = tape.gradient(loss, trainable_weights)
+        #
+        #     # Update weights
+        #     self.optimizer.apply_gradients(zip(gradients, trainable_weights))
+        # else:
+        #     warnings.warn("The model does not have any trainable weights.")
 
-            # Update weights
-            self.optimizer.apply_gradients(zip(gradients, trainable_weights))
-        else:
-            warnings.warn("The model does not have any trainable weights.")
-
-        return self.compute_metrics(x, y, y_pred, sample_weight=sample_weight)
+        # return self.compute_metrics(x, y, y_pred, sample_weight=sample_weight)
 
     def call(self, inputs, label, training=False, **kwargs):
         B, H, W, C = inputs.shape
@@ -71,16 +93,16 @@ class CifarKerasModel(keras.Model):
             inputs = self.random_flip(inputs)
 
         t = tf.random.uniform([B], 0, self.diffusion.num_timesteps, dtype=tf.int32)
+        denoise_fn = functools.partial(self._denoise, y=label,
+                                       dropout=self.dropout)  # This creates a function with preapplied arguments
 
-        losses = self.diffusion.training_losses(
-            denoise_fn=functools.partial(self._denoise, y=label, dropout=self.dropout), x_start=inputs, t=t)
+        losses, model_output = self.diffusion.training_losses(denoise_fn=denoise_fn, x_start=inputs, t=t)
 
         assert losses.shape == t.shape == [B]
-        return {'loss': tf.reduce_mean(losses)}
+        # Return scalar loss
+        return tf.reduce_mean(losses), tf.reduce_mean(model_output)
 
-        # inputs = self.dense1(inputs)
-        # inputs = self.dropout(inputs, training=training)  # This is to prevent overfitting , dont run when inference
-        # return self.dense2(inputs)
+    # BELLOW THIS IS THE ORIGINAL IMPLEMENTATION OF THE MODEL
 
     def _denoise(self, x, t, y, dropout):
         B, H, W, C = x.shape.as_list()

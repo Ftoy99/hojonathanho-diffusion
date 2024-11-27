@@ -8,11 +8,13 @@ def nonlinearity(x):
     return tf.nn.swish(x)
 
 
-def normalize(x, *, temb, name):
-    # TODO
-    # return tf_contrib.layers.group_norm(x, scope=name)
-    pass
+# def normalize(x, *, temb, name):
+#     # TODO
+#     # return tf_contrib.layers.group_norm(x, scope=name)
+#     pass
 
+def normalize(x, *, temb=None, name="norm"):
+    return tf.keras.layers.LayerNormalization(name=name)(x)
 
 def upsample(x, *, name, with_conv):
     with tf.variable_scope(name):
