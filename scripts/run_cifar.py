@@ -73,7 +73,7 @@ def train(
         tfds_data_dir='tensorflow_datasets', log_dir='logs', keep_checkpoint_max=2):
     kwargs = dict(locals())
 
-    # tf.config.run_functions_eagerly(True)
+    tf.config.run_functions_eagerly(True)
 
     # Get dataset
     ds, ds_labels = datasets.get_dataset("cifar10")
@@ -165,7 +165,7 @@ def train(
         metrics=['accuracy'])  # maybe add optimizer loss and stuff
 
     # Train the model
-    history = cifar_keras_model.fit(train_ds, epochs=20)
+    history = cifar_keras_model.fit(train_ds, epochs=2)
 
     # Evaluate the model
     test_loss, test_accuracy = cifar_keras_model.evaluate(test_ds)

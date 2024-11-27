@@ -24,49 +24,21 @@ class CifarKerasModel(keras.Model):
         self.randflip = randflip
         self.random_flip = keras.layers.RandomFlip()
 
-    def compute_loss(self, x=None, y=None, y_pred=None, sample_weight=None, training=True):
-        del x
-        del training
-        losses = []
-        if self._compile_loss is not None:
-            loss = self._compile_loss(y, y_pred, sample_weight)
-            if loss is not None:
-                losses.append(loss)
-        for loss in self.losses:
-            losses.append(ops.sum(ops.cast(loss, dtype=backend.floatx())))
-        if backend.backend() != "jax" and len(losses) == 0:
-            raise ValueError(
-                "No loss to compute. Provide a `loss` argument in `compile()`."
-            )
-        if len(losses) == 1:
-            total_loss = losses[0]
-        elif len(losses) == 0:
-            total_loss = ops.zeros(())
-        else:
-            total_loss = ops.sum(losses)
-        return total_loss
-
     def train_step(self, data):
-        '''
-        Originally train takes input and step count to noise/denoise must addjust this method for call
-        '''
+        """
+        Originally train takes input and step count to noise/denoise must adjust this method for call
+        """
         x, y, sample_weight = data_adapter_utils.unpack_x_y_sample_weight(data)
 
         # Forward pass
         with tf.GradientTape() as tape:
             if self._call_has_training_arg:
                 # Call method returns the losses
-                loss, y_pred = self(x, y, training=True)
+                y_pred = self(x, y, training=True)
             else:
-                loss, y_pred = self(x, y)
+                y_pred = self(x, y)
 
-            # loss = self.compute_loss(
-            #     x=x,
-            #     y=y,
-            #     y_pred=y_pred,
-            #     sample_weight=sample_weight,
-            #     training=True,
-            # )
+            loss = y_pred["loss"]
 
             self._loss_tracker.update_state(
                 loss, sample_weight=tf.shape(tree.flatten(x)[0])[0]
@@ -74,17 +46,24 @@ class CifarKerasModel(keras.Model):
             if self.optimizer is not None:
                 loss = self.optimizer.scale_loss(loss)
 
-        # # Compute gradients
-        # if self.trainable_weights:
-        #     trainable_weights = self.trainable_weights
-        #     gradients = tape.gradient(loss, trainable_weights)
-        #
-        #     # Update weights
-        #     self.optimizer.apply_gradients(zip(gradients, trainable_weights))
-        # else:
-        #     warnings.warn("The model does not have any trainable weights.")
+        # Compute gradients
+        if self.trainable_weights:
+            gradients = tape.gradient(loss, self.trainable_weights)
 
-        # return self.compute_metrics(x, y, y_pred, sample_weight=sample_weight)
+            # Gradient clipping
+            if self.grad_clip:
+                gradients, _ = tf.clip_by_global_norm(gradients, self.grad_clip)
+
+            # Apply gradients
+            self.optimizer.apply_gradients(zip(gradients, self.trainable_weights), global_step=self._global_step)
+
+        else:
+            warnings.warn("The model does not have any trainable weights.")
+
+        # Update Exponential Moving Average (EMA) of model weights
+        self._ema.apply(self.trainable_variables)
+
+        return self.compute_metrics(x, y, y_pred, sample_weight=sample_weight)
 
     def call(self, inputs, label, training=False, **kwargs):
         B, H, W, C = inputs.shape
@@ -96,11 +75,11 @@ class CifarKerasModel(keras.Model):
         denoise_fn = functools.partial(self._denoise, y=label,
                                        dropout=self.dropout)  # This creates a function with preapplied arguments
 
-        losses, model_output = self.diffusion.training_losses(denoise_fn=denoise_fn, x_start=inputs, t=t)
+        losses = self.diffusion.training_losses(denoise_fn=denoise_fn, x_start=inputs, t=t)
 
         assert losses.shape == t.shape == [B]
         # Return scalar loss
-        return tf.reduce_mean(losses), tf.reduce_mean(model_output)
+        return {'loss': tf.reduce_mean(losses)}
 
     # BELLOW THIS IS THE ORIGINAL IMPLEMENTATION OF THE MODEL
 
@@ -127,7 +106,7 @@ class CifarKerasModel(keras.Model):
         if self.randflip:
             x = tf.image.random_flip_left_right(x)
             assert x.shape == [B, H, W, C]
-        t = tf.random_uniform([B], 0, self.diffusion.num_timesteps, dtype=tf.int32)
+        t = tf.random.uniform([B], 0, self.diffusion.num_timesteps, dtype=tf.int32)
         losses = self.diffusion.training_losses(
             denoise_fn=functools.partial(self._denoise, y=y, dropout=self.dropout), x_start=x, t=t)
         assert losses.shape == t.shape == [B]
@@ -138,7 +117,7 @@ class CifarKerasModel(keras.Model):
             'samples': self.diffusion.p_sample_loop(
                 denoise_fn=functools.partial(self._denoise, y=y, dropout=0),
                 shape=dummy_noise.shape.as_list(),
-                noise_fn=tf.random_normal
+                noise_fn=tf.random.normal
             )
         }
 

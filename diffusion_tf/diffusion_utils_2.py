@@ -301,7 +301,7 @@ class GaussianDiffusion2:
       raise NotImplementedError(self.loss_type)
 
     assert losses.shape == t.shape
-    return losses,model_output
+    return losses
 
   def _prior_bpd(self, x_start):
     B, T = x_start.shape[0], self.num_timesteps
