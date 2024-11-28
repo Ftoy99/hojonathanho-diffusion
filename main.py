@@ -30,14 +30,15 @@ def main():
     # Compile the model
     model.compile(optimizer=optimizer, loss=loss_type)  # Adam optimize
 
-    checkpoint_callback = ModelCheckpoint(
-        filepath='model_epoch_{epoch:02d}.h5',  # Filename pattern
-        save_weights_only=True,  # Only save the weights, not the full model
-        save_freq='epoch',  # Save weights after every epoch
-        verbose=1  # Show a message when weights are saved
-    )
+    # checkpoint_callback = ModelCheckpoint(
+    #     filepath='model_epoch_{epoch:02d}.h5',  # Filename pattern
+    #     save_weights_only=True,  # Only save the weights, not the full model
+    #     save_freq='epoch',  # Save weights after every epoch
+    #     verbose=1  # Show a message when weights are saved
+    # )
 
-    model.fit(x_train, y_train, batch_size=100, epochs=10,callbacks=[checkpoint_callback])
+    model.fit(x_train, y_train, batch_size=100, epochs=10, callbacks=[checkpoint_callback])
+    model.save_weights('model_weights.tf', save_format='tf')
 
 
 if __name__ == '__main__':
