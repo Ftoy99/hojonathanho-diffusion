@@ -37,7 +37,7 @@ def main():
     #     verbose=1  # Show a message when weights are saved
     # )
 
-    model.fit(x_train, y_train, batch_size=100, epochs=10, callbacks=[checkpoint_callback])
+    model.fit(x_train, y_train, batch_size=100, epochs=10)
     model.save_weights('model_weights.tf', save_format='tf')
 
 
