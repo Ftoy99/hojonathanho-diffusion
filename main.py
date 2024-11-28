@@ -40,7 +40,7 @@ def main():
     #     verbose=1  # Show a message when weights are saved
     # )
 
-    model.fit(x_train, y_train, batch_size=32, epochs=10)
+    model.fit(x_train, y_train, batch_size=50, epochs=10)
 
     model.save_weights('model_weights.weights.h5')
 
