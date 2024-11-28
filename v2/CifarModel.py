@@ -36,10 +36,10 @@ class CifarModel(keras.Model):
         x, y = data
         # show_images(images=x, title="Images og")
 
-        B, H, W, C = tf.shape(x)  # Get sizes batch , height ,width , channels
+        # B, H, W, C = tf.shape(x)  # Get sizes batch , height ,width , channels
 
         # ? how much noise basically in that timestep we progressively will have less noise
-        t = tf.random.uniform([B], minval=0, maxval=self.diffusion.num_timesteps,
+        t = tf.random.uniform([tf.shape(x)[0]], minval=0, maxval=self.diffusion.num_timesteps,
                               dtype=tf.int32)  # uniform (get around the same amount of step->1 and step->self.diffusion.num_timesteps)
 
         with tf.GradientTape() as tape:
@@ -61,7 +61,7 @@ class CifarModel(keras.Model):
         # 7. Get the gradients
         gradients = tape.gradient(loss, self.unet.trainable_weights)
 
-        # 8. Update the weights of the network
+        # update wieghts of unet
         self.optimizer.apply_gradients(zip(gradients, self.unet.trainable_weights))
 
         # 9. Updates the weight values for the network with EMA weights

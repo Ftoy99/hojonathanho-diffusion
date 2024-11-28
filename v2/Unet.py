@@ -1,8 +1,9 @@
 import math
 
 import keras
-from keras.src import layers
 import tensorflow as tf
+from keras import layers
+import tensorflow_addons as tfa
 
 
 # Kernel initializer to use
@@ -11,6 +12,7 @@ def kernel_init(scale):
     return keras.initializers.VarianceScaling(
         scale, mode="fan_avg", distribution="uniform"
     )
+
 
 def UpSample(width, interpolation="nearest"):
     def apply(x):
@@ -22,6 +24,7 @@ def UpSample(width, interpolation="nearest"):
 
     return apply
 
+
 def TimeMLP(units, activation_fn=keras.activations.swish):
     def apply(inputs):
         temb = layers.Dense(
@@ -31,6 +34,7 @@ def TimeMLP(units, activation_fn=keras.activations.swish):
         return temb
 
     return apply
+
 
 def DownSample(width):
     def apply(x):
@@ -44,6 +48,7 @@ def DownSample(width):
         return x
 
     return apply
+
 
 def ResidualBlock(width, groups=8, activation_fn=keras.activations.swish):
     def apply(inputs):
@@ -59,17 +64,17 @@ def ResidualBlock(width, groups=8, activation_fn=keras.activations.swish):
 
         temb = activation_fn(t)
         temb = layers.Dense(width, kernel_initializer=kernel_init(1.0))(temb)[
-            :, None, None, :
-        ]
+               :, None, None, :
+               ]
 
-        x = layers.GroupNormalization(groups=groups)(x)
+        x = tfa.layers.GroupNormalization(groups=groups)(x)
         x = activation_fn(x)
         x = layers.Conv2D(
             width, kernel_size=3, padding="same", kernel_initializer=kernel_init(1.0)
         )(x)
 
         x = layers.Add()([x, temb])
-        x = layers.GroupNormalization(groups=groups)(x)
+        x = tfa.layers.GroupNormalization(groups=groups)(x)
         x = activation_fn(x)
 
         x = layers.Conv2D(
@@ -95,6 +100,7 @@ class TimeEmbedding(layers.Layer):
         emb = tf.concat([tf.sin(emb), tf.cos(emb)], axis=-1)
         return emb
 
+
 class AttentionBlock(layers.Layer):
     """Applies self-attention.
 
@@ -108,7 +114,7 @@ class AttentionBlock(layers.Layer):
         self.groups = groups
         super().__init__(**kwargs)
 
-        self.norm = layers.GroupNormalization(groups=groups)
+        self.norm = tfa.layers.GroupNormalization(groups=groups)
         self.query = layers.Dense(units, kernel_initializer=kernel_init(1.0))
         self.key = layers.Dense(units, kernel_initializer=kernel_init(1.0))
         self.value = layers.Dense(units, kernel_initializer=kernel_init(1.0))
@@ -137,14 +143,14 @@ class AttentionBlock(layers.Layer):
 
 
 def build_model(
-    img_size,
-    img_channels,
-    widths,
-    has_attention,
-    num_res_blocks=2,
-    norm_groups=8,
-    interpolation="nearest",
-    activation_fn=keras.activations.swish,
+        img_size,
+        img_channels,
+        widths,
+        has_attention,
+        num_res_blocks=2,
+        norm_groups=8,
+        interpolation="nearest",
+        activation_fn=keras.activations.swish,
 ):
     image_input = layers.Input(
         shape=(img_size, img_size, img_channels), name="image_input"
@@ -200,7 +206,7 @@ def build_model(
             x = UpSample(widths[i], interpolation=interpolation)(x)
 
     # End block
-    x = layers.GroupNormalization(groups=norm_groups)(x)
+    x = tfa.layers.GroupNormalization(groups=norm_groups)(x)
     x = activation_fn(x)
     x = layers.Conv2D(3, (3, 3), padding="same", kernel_initializer=kernel_init(0.0))(x)
     return keras.Model([image_input, time_input], x, name="unet")

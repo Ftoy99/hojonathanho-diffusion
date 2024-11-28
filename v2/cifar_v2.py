@@ -1,14 +1,17 @@
 import keras
 import tensorflow as tf
-from keras.src.losses import MeanSquaredError
-from keras.src.optimizers import Adam
+
+from keras.losses import MeanSquaredError
+from keras.optimizers import Adam
+from tensorflow.python.keras.callbacks import ModelCheckpoint
 
 from v2.CifarModel import CifarModel
 
 
 def main():
-    tf.config.run_functions_eagerly(True)  # This is to debug
-    tf.data.experimental.enable_debug_mode()  # This is to debug
+    # tf.config.run_functions_eagerly(True)  # This is to debug
+    # tf.data.experimental.enable_debug_mode()  # This is to debug
+    print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))  # show detected gpu number
 
     (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
     x_train = x_train.astype('float32') / 255.0  # make this from 0-1 and dtype float32 instead of img uint8
@@ -27,7 +30,14 @@ def main():
     # Compile the model
     model.compile(optimizer=optimizer, loss=loss_type)  # Adam optimize
 
-    model.fit(x_train, y_train, batch_size=20, epochs=10)
+    checkpoint_callback = ModelCheckpoint(
+        'model_epoch_{epoch:02d}.h5',  # Filename pattern, using epoch number in filename
+        save_freq='epoch',  # Save the model after every epoch
+        save_best_only=False,  # Set to True to save only the best model based on a monitored metric
+        verbose=1  # Verbosity level (optional)
+    )
+
+    model.fit(x_train, y_train, batch_size=100, epochs=10, callbacks=checkpoint_callback)
 
 
 if __name__ == '__main__':
