@@ -38,7 +38,7 @@ def main():
     # )
 
     model.fit(x_train, y_train, batch_size=100, epochs=10)
-    model.save_weights('model_weights.tf', save_format='tf')
+    model.save_weights('model_weights')
 
 
 if __name__ == '__main__':
