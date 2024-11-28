@@ -1,3 +1,5 @@
+import os
+
 import keras
 import tensorflow as tf
 
@@ -33,12 +35,14 @@ def main():
     # Compile the model
     model.compile(optimizer=optimizer, loss=loss_type)  # Adam optimize
 
-    # checkpoint_callback = ModelCheckpoint(
-    #     filepath='model_epoch_{epoch:02d}.h5',  # Filename pattern
-    #     save_weights_only=True,  # Only save the weights, not the full model
-    #     save_freq='epoch',  # Save weights after every epoch
-    #     verbose=1  # Show a message when weights are saved
-    # )
+    # Check if the weights file exists
+    weights_file = 'model_weights.weights.h5'
+    if os.path.exists(weights_file):
+        # Load the saved weights
+        model.load_weights(weights_file)
+        print("Loaded weights from", weights_file)
+    else:
+        print("No pre-trained weights found. Training from scratch.")
 
     model.fit(x_train, y_train, batch_size=50, epochs=10)
 
