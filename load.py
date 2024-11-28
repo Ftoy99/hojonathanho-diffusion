@@ -39,8 +39,7 @@ def generate_img(model, num_images=1):
             pred_noise, samples, tt, clip_denoised=True
         )
     # 3. Return generated samples
-    print("Samples")
-    print(samples)
+    save_img(samples)
     return samples
 
 
