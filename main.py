@@ -23,6 +23,8 @@ def main():
     # make the model
     model = CifarModel.CifarModel()
 
+    model.build(input_shape=(None, *x_train.shape[1:]))
+
     # Optimizer and loss type
     optimizer = Adam(learning_rate=2e-4, epsilon=1e-8)
     loss_type = MeanSquaredError()  # mse
@@ -37,7 +39,8 @@ def main():
     #     verbose=1  # Show a message when weights are saved
     # )
 
-    model.fit(x_train, y_train, batch_size=100, epochs=10)
+    model.fit(x_train, y_train, batch_size=100, epochs=1)
+
     model.save_weights('model_weights.weights.h5')
 
 
