@@ -5,6 +5,7 @@ from keras.losses import MeanSquaredError
 from keras.optimizers import Adam
 from tensorflow.python.keras.callbacks import ModelCheckpoint
 
+from load import generate_img
 from v2 import CifarModel
 
 
@@ -43,6 +44,7 @@ def main():
 
     model.save_weights('model_weights.weights.h5')
 
+    generate_img(model)
 
 if __name__ == '__main__':
     main()

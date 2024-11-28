@@ -70,3 +70,4 @@ class CifarModel(keras.Model):
 
         # 10. Return loss values
         return {"loss": loss}
+
