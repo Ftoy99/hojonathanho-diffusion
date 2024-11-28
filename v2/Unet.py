@@ -3,7 +3,6 @@ import math
 import keras
 import tensorflow as tf
 from keras import layers
-import tensorflow_addons as tfa
 
 
 # Kernel initializer to use
@@ -67,14 +66,14 @@ def ResidualBlock(width, groups=8, activation_fn=keras.activations.swish):
                :, None, None, :
                ]
 
-        x = tfa.layers.GroupNormalization(groups=groups)(x)
+        x = keras.layers.GroupNormalization(groups=groups)(x)
         x = activation_fn(x)
         x = layers.Conv2D(
             width, kernel_size=3, padding="same", kernel_initializer=kernel_init(1.0)
         )(x)
 
         x = layers.Add()([x, temb])
-        x = tfa.layers.GroupNormalization(groups=groups)(x)
+        x = keras.layers.GroupNormalization(groups=groups)(x)
         x = activation_fn(x)
 
         x = layers.Conv2D(
@@ -114,7 +113,7 @@ class AttentionBlock(layers.Layer):
         self.groups = groups
         super().__init__(**kwargs)
 
-        self.norm = tfa.layers.GroupNormalization(groups=groups)
+        self.norm = keras.layers.GroupNormalization(groups=groups)
         self.query = layers.Dense(units, kernel_initializer=kernel_init(1.0))
         self.key = layers.Dense(units, kernel_initializer=kernel_init(1.0))
         self.value = layers.Dense(units, kernel_initializer=kernel_init(1.0))
@@ -206,7 +205,7 @@ def build_model(
             x = UpSample(widths[i], interpolation=interpolation)(x)
 
     # End block
-    x = tfa.layers.GroupNormalization(groups=norm_groups)(x)
+    x = keras.layers.GroupNormalization(groups=norm_groups)(x)
     x = activation_fn(x)
     x = layers.Conv2D(3, (3, 3), padding="same", kernel_initializer=kernel_init(0.0))(x)
     return keras.Model([image_input, time_input], x, name="unet")
