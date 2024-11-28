@@ -184,9 +184,25 @@ class GaussianDiffusion2:
         )
 
     # === Sampling ===
+    def predict_start_from_noise(self, x_t, t, noise):
+        x_t_shape = tf.shape(x_t)
+        return (
+            self._extract(self.sqrt_recip_alphas_cumprod, t, x_t_shape) * x_t
+            - self._extract(self.sqrt_recipm1_alphas_cumprod, t, x_t_shape) * noise
+        )
+
+    def p_mean_variance_v2(self, pred_noise, x, t, clip_denoised=True):
+        x_recon = self.predict_start_from_noise(x, t=t, noise=pred_noise)
+        if clip_denoised:
+            x_recon = tf.clip_by_value(x_recon, self.clip_min, self.clip_max)
+
+        model_mean, posterior_variance, posterior_log_variance = self.q_posterior_mean_variance(
+            x_start=x_recon, x_t=x, t=t
+        )
+        return model_mean, posterior_variance, posterior_log_variance
+
     def p_sample_v2(self, pred_noise, x, t, clip_denoised=True):
-        model_mean, _, model_log_variance = self.p_mean_variance(pred_noise, x=x, t=t, clip_denoised=clip_denoised,
-                                                                 return_pred_xstart=True)
+        model_mean, _, model_log_variance = self.p_mean_variance_v2(pred_noise, x=x, t=t, clip_denoised=clip_denoised)
         noise = tf.random.normal(shape=x.shape, dtype=x.dtype)
         # No noise when t == 0
         nonzero_mask = tf.reshape(
