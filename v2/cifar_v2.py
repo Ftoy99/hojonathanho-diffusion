@@ -5,7 +5,7 @@ from keras.losses import MeanSquaredError
 from keras.optimizers import Adam
 from tensorflow.python.keras.callbacks import ModelCheckpoint
 
-from v2.CifarModel import CifarModel
+from v2 import CifarModel
 
 
 def main():
@@ -21,7 +21,7 @@ def main():
     y_test = keras.utils.to_categorical(y_test, 10)
 
     # make the model
-    model = CifarModel()
+    model = CifarModel.CifarModel()
 
     # Optimizer and loss type
     optimizer = Adam(learning_rate=2e-4, epsilon=1e-8)
