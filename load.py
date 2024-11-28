@@ -40,7 +40,6 @@ def generate_img(model, num_images=1):
         )
     # 3. Return generated samples
     save_img(samples)
-    return samples
 
 
 def main():
@@ -51,8 +50,6 @@ def main():
     model.load_weights('model_weights.weights.h5')
 
     samples = generate_img(model)
-    print(samples)
-
 
 if __name__ == '__main__':
     main()
