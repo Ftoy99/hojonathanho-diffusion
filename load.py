@@ -5,7 +5,6 @@ import numpy as np
 import tensorflow as tf
 from PIL import Image
 
-
 from v2 import CifarModel
 
 
@@ -25,7 +24,7 @@ def save_img(img):
 
 
 def generate_img(model):
-    img_final = model.diffusion.p_sample_loop(denoise_fn=model.unet, shape=(32, 32, 3))
+    img_final = model.diffusion.p_sample_loop(denoise_fn=model.unet, shape=(1, 32, 32, 3))
     save_img(img_final)
 
 
@@ -37,6 +36,7 @@ def main():
     model.load_weights('model_weights.weights.h5')
 
     generate_img(model)
+
 
 if __name__ == '__main__':
     main()
