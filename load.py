@@ -23,9 +23,25 @@ def save_img(img):
     image.save(os.path.join("generated_images", filename))
 
 
-def generate_img(model):
-    img_final = model.diffusion.p_sample_loop(denoise_fn=model.unet, shape=(1, 32, 32, 3))
-    save_img(img_final)
+def generate_img(model, num_images=1):
+    # 1. Randomly sample noise (starting point for reverse process)
+    samples = tf.random.normal(
+        shape=(num_images, 32, 32, 3), dtype=tf.float32
+    )
+    # 2. Sample from the model iteratively
+    for t in reversed(range(0, model.diffusion.num_timesteps)):
+        tt = tf.cast(tf.fill(num_images, t), dtype=tf.int64)
+        pred_noise = model.ema_network.predict(
+            [samples, tt], verbose=0, batch_size=num_images
+        )
+
+        samples = model.diffusion.p_sample_v2(
+            pred_noise, samples, tt, clip_denoised=True
+        )
+    # 3. Return generated samples
+    print("Samples")
+    print(samples)
+    return samples
 
 
 def main():
@@ -35,7 +51,8 @@ def main():
     # Load the saved weights
     model.load_weights('model_weights.weights.h5')
 
-    generate_img(model)
+    samples = generate_img(model)
+    print(samples)
 
 
 if __name__ == '__main__':

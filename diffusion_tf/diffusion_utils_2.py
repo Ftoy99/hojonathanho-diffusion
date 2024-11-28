@@ -54,6 +54,8 @@ class GaussianDiffusion2:
     self.model_mean_type = model_mean_type  # xprev, xstart, eps
     self.model_var_type = model_var_type  # learned, fixedsmall, fixedlarge
     self.loss_type = loss_type  # kl, mse
+    self.clip_min = -1.0
+    self.clip_max = 1.0
 
     assert isinstance(betas, np.ndarray)
     self.betas = betas = betas.astype(np.float64)  # computations here in float64 for accuracy
@@ -182,6 +184,14 @@ class GaussianDiffusion2:
     )
 
   # === Sampling ===
+  def p_sample_v2(self, pred_noise, x, t, clip_denoised=True):
+    model_mean, _, model_log_variance = self.p_mean_variance(pred_noise, x=x, t=t, clip_denoised=clip_denoised)
+    noise = tf.random.normal(shape=x.shape, dtype=x.dtype)
+    # No noise when t == 0
+    nonzero_mask = tf.reshape(
+    1 - tf.cast(tf.equal(t, 0), tf.float32), [tf.shape(x)[0], 1, 1, 1]
+    )
+    return model_mean + nonzero_mask * tf.exp(0.5 * model_log_variance) * noise
 
   def p_sample(self, denoise_fn, *, x, t, noise_fn, clip_denoised=True, return_pred_xstart: bool):
     """
