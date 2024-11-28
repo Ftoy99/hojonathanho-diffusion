@@ -35,7 +35,7 @@ def main():
         save_freq='epoch',  # Save the model after every epoch
         save_best_only=False,  # Set to True to save only the best model based on a monitored metric
         verbose=1,  # Verbosity level (optional)
-        save_weights_only = True
+        save_format="tf"
     )
 
     model.fit(x_train, y_train, batch_size=100, epochs=10, callbacks=checkpoint_callback)
