@@ -15,7 +15,7 @@ def save_img(img):
     img_final = np.clip(img_final[0] * 255.0, 0, 255).astype(np.uint8)  # assuming batch size of 1
 
     # Create timestamped filename
-    timestamp = time.strftime("%Y%m%d-%H%M%S")
+    timestamp = time.strftime("%Y%m%d-%H%M%S-%f")[:-3]
     filename = f"generated_image_{timestamp}.png"
 
     # Save the image
