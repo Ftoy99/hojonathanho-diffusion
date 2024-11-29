@@ -38,6 +38,7 @@ def generate_img(model, num_images=1):
         samples = model.diffusion.p_sample_v2(
             pred_noise, samples, tt, clip_denoised=True
         )
+        save_img(samples)
     # 3. Return generated samples
     save_img(samples)
 
